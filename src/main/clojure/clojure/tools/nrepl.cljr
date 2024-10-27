@@ -4,7 +4,9 @@
             [clojure.tools.nrepl.server.middleware :as middleware]
             [clojure.string :as string])
   (:import [System.Net Dns IPEndPoint IPAddress]
-           [System.Net.Sockets TcpListener AddressFamily] ))
+           [System.Net.Sockets TcpListener AddressFamily]
+           [System.IO Directory]
+           [System Environment]))
 
 (set! *warn-on-reflection* true)
 
@@ -46,5 +48,10 @@
      :future (future
                (server/listen ctx tcp-listener opts))}))
 
+;; This is an added entry point so I can use a script to quickly hook in
 (defn -main [& args]
-  (start-server!))
+  (let [target-dir (or (Environment/GetEnvironmentVariable "CLJCLR_WORKING_DIR") "~")]
+    (let [port (or (Environment/GetEnvironmentVariable "NREPL_PORT") 1667)]
+      (let [host (or (Environment/GetEnvironmentVariable "NREPL_HOST") "127.0.0.1")]
+        (Directory/SetCurrentDirectory target-dir)
+        (start-server! {:port port :host host})))))
